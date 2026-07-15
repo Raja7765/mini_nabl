@@ -1,3 +1,4 @@
+from requests import session
 from fastapi import FastAPI
 from pydantic import BaseModel
 from services.rag_service import ask_question
@@ -8,6 +9,7 @@ app = FastAPI()
 
 #Request body structure 
 class QuestionRequest(BaseModel):
+    session_id: str
     question: str
 
 
@@ -21,7 +23,7 @@ def home():
 def chat(request: QuestionRequest):
 
     #Send user question to the RAG service 
-    answer = ask_question(request.question)
+    answer = ask_question(request.question,request.session_id)
 
     # Gemini response list format-la vandha text mattum extract pannum
     if isinstance(answer, list):
@@ -31,5 +33,6 @@ def chat(request: QuestionRequest):
     #Return the response in JSON format
     return {
         "question": request.question,
+        "session_id":request.session_id,
         "answer": answer
     }
