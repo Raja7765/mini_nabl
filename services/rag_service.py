@@ -1,11 +1,9 @@
 import os
 from dotenv import load_dotenv
 
-from langchain_google_genai import (
-    ChatGoogleGenerativeAI,
-    GoogleGenerativeAIEmbeddings
-)
-from langchain_chroma import Chroma
+from langchain_google_genai import (ChatGoogleGenerativeAI)
+from services.vector_store import VectorStore
+
 
 from services.redis_session import (
     get_session_history,
@@ -31,34 +29,14 @@ print(
 # ==========================================
 # INITIALIZE EMBEDDING MODEL
 # ==========================================
-print("Initializing embedding model...")
-
-embeddings = GoogleGenerativeAIEmbeddings(
-    model="gemini-embedding-001"
-)
-
-# Quick test to verify embedding model
-test_vector = embeddings.embed_query("Hello")
-
-print(
-    "Embedding engine verified! "
-    f"Vector dimension length: {len(test_vector)}"
-)
-
-print("-" * 50)
+#----------------------------------------------
 
 
 # ==========================================
 # LOAD EXISTING CHROMADB
 # ==========================================
-print("Loading existing ChromaDB...")
-
-vector_store = Chroma(
-    persist_directory="./chroma_data",
-    embedding_function=embeddings,
-    collection_name="nabl_documents"
-)
-
+print("Loading Existing VectorStore")
+vector_store=VectorStore()
 
 # ==========================================
 # INITIALIZE GEMINI LLM
@@ -225,6 +203,9 @@ def ask_question(
         search_question,
         conversation_history
     )
+    target_document = router_result["target_document"]
+
+    print(f"Target Document:{target_document}")
 
     topic = router_result.get(
         "topic",
@@ -277,9 +258,12 @@ def ask_question(
     #
     # Document filtering will be added
     # in the next step.
-    results = vector_store.similarity_search(
-        search_question,
-        k=3
+    search_filter = {"document": target_document} if target_document else None
+
+    results = vector_store.search(
+        query=search_question,
+        k=3,
+        filter=search_filter
     )
 
 

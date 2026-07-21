@@ -1,4 +1,10 @@
-from requests import session
+from fastapi import UploadFile, File
+import os
+import shutil
+from ingest import ingest_single_pdf
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from services.vector_store import VectorStore
 from fastapi import FastAPI
 from pydantic import BaseModel
 from services.rag_service import ask_question
@@ -6,6 +12,9 @@ from services.rag_service import ask_question
 
 #Create fast api application
 app = FastAPI()
+
+#Create a vector instance 
+vector_store = VectorStore()
 
 #Request body structure 
 class QuestionRequest(BaseModel):
@@ -21,6 +30,7 @@ def home():
 #Chat endpoint 
 @app.post("/chat")
 def chat(request: QuestionRequest):
+    
 
     #Send user question to the RAG service 
     answer = ask_question(request.question,request.session_id)
@@ -35,4 +45,23 @@ def chat(request: QuestionRequest):
         "question": request.question,
         "session_id":request.session_id,
         "answer": answer
+    }
+
+#Document upload api
+@app.post("/documents/upload")
+async def upload_document(file: UploadFile = File(...)):
+
+    os.makedirs("data", exist_ok=True)
+
+    file_path = os.path.join("data", file.filename)
+
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    chunks = ingest_single_pdf(file_path)
+
+    return {
+        "message": "Document uploaded successfully",
+        "filename": file.filename,
+        "chunks": chunks
     }

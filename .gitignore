@@ -12,6 +12,7 @@ __pycache__/
 
 # ChromaDB local vector database
 chroma_data/
+.data/
 
 # IDE files
 .vscode/
