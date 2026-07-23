@@ -1,15 +1,12 @@
 import os
 from dotenv import load_dotenv
 
-from langchain_google_genai import (ChatGoogleGenerativeAI)
+from langchain_google_genai import ChatGoogleGenerativeAI
 from services.vector_store import VectorStore
-
-
 from services.redis_session import (
     get_session_history,
     add_to_history
 )
-
 from services.query_router import route_query
 
 
@@ -19,31 +16,23 @@ from services.query_router import route_query
 load_dotenv()
 
 api_key = os.getenv("GOOGLE_API_KEY")
-
-print(
-    "API key loaded successfully:",
-    api_key is not None
-)
-
-
-# ==========================================
-# INITIALIZE EMBEDDING MODEL
-# ==========================================
-#----------------------------------------------
+print("API key loaded successfully:", api_key is not None)
 
 
 # ==========================================
 # LOAD EXISTING CHROMADB
 # ==========================================
 print("Loading Existing VectorStore")
-vector_store=VectorStore()
+vector_store = VectorStore()
+
 
 # ==========================================
 # INITIALIZE GEMINI LLM
 # ==========================================
 llm = ChatGoogleGenerativeAI(
     model="gemini-3.1-flash-lite",
-    temperature=0.3
+    temperature=0.3,
+    streaming=True
 )
 
 
@@ -55,27 +44,17 @@ def rewrite_question(
     conversation_history: str
 ) -> str:
 
-    # If there is no previous conversation,
-    # rewriting is not required
     if not conversation_history.strip():
-        print(
-            "No previous conversation. "
-            "Using original question for retrieval."
-        )
-
+        print("No previous conversation. Using original question for retrieval.")
         return user_question
 
-    print(
-        "\nRewriting follow-up question "
-        "using conversation history..."
-    )
+    print("\nRewriting follow-up question using conversation history...")
 
     rewrite_prompt = f"""
 You are a query rewriting assistant for an NABL document chatbot.
 
 Use the previous conversation only to understand references
 in the current question such as:
-
 - it
 - its
 - this
@@ -101,163 +80,83 @@ Current Question:
 """
 
     response = llm.invoke(rewrite_prompt)
-
     rewritten_question = response.content
 
-    # Handle multimodal/list response if returned
     if isinstance(rewritten_question, list):
         rewritten_question = rewritten_question[0]["text"]
 
     rewritten_question = rewritten_question.strip()
 
-    print(
-        f"Original Question: "
-        f"{user_question}"
-    )
-
-    print(
-        f"Rewritten Question: "
-        f"{rewritten_question}"
-    )
+    print(f"Original Question: {user_question}")
+    print(f"Rewritten Question: {rewritten_question}")
 
     return rewritten_question
 
 
 # ==========================================
-# MAIN RAG QUESTION ANSWERING FUNCTION
+# STREAMING RAG FUNCTION (SSE)
 # ==========================================
-def ask_question(
+def stream_answer(
     user_question: str,
     session_id: str
-) -> str:
-
+):
     print("\n" + "=" * 60)
-    print("NEW CHAT REQUEST")
+    print("NEW STREAM CHAT REQUEST")
     print("=" * 60)
 
-    print(
-        f"Session ID -> "
-        f"'{session_id}'"
-    )
-
-    print(
-        f"User Query Captured -> "
-        f"'{user_question}'"
-    )
-
+    print(f"Session ID -> '{session_id}'")
+    print(f"User Query Captured -> '{user_question}'")
 
     # ==========================================
     # STEP 1: GET PREVIOUS HISTORY FROM REDIS
     # ==========================================
-    print(
-        "\nStep 1: Loading previous "
-        "conversation from Redis..."
-    )
-
-    history = get_session_history(
-        session_id
-    )
-
-    print(
-        "Previous conversation turns found: "
-        f"{len(history)}"
-    )
-
+    print("\nStep 1: Loading previous conversation from Redis...")
+    history = get_session_history(session_id)
+    print(f"Previous conversation turns found: {len(history)}")
 
     # ==========================================
     # STEP 2: FORMAT CONVERSATION HISTORY
     # ==========================================
     conversation_history = ""
-
     for turn in history:
-
         conversation_history += (
             f"\nUser: {turn['user']}\n"
             f"Assistant: {turn['assistant']}\n"
         )
 
-
     # ==========================================
     # STEP 3: REWRITE FOLLOW-UP QUESTION
     # ==========================================
-    print(
-        "\nStep 2: Preparing standalone "
-        "search question..."
-    )
-
+    print("\nStep 2: Preparing standalone search question...")
     search_question = rewrite_question(
         user_question,
         conversation_history
     )
 
-
     # ==========================================
     # STEP 4: QUERY ROUTER
     # ==========================================
-    print(
-        "\nStep 3: Sending question "
-        "to Query Router..."
-    )
-
+    print("\nStep 3: Sending question to Query Router...")
     router_result = route_query(
         search_question,
         conversation_history
     )
-    target_document = router_result["target_document"]
-
-    print(f"Target Document:{target_document}")
-
-    topic = router_result.get(
-        "topic",
-        "General Query"
-    )
-
-    intent = router_result.get(
-        "intent",
-        "General Inquiry"
-    )
-
-    target_document = router_result.get(
-        "target_document"
-    )
+    
+    topic = router_result.get("topic", "General Query")
+    intent = router_result.get("intent", "General Inquiry")
+    target_document = router_result.get("target_document")
 
     print("\n--- ROUTER DECISION ---")
-
-    print(
-        f"Topic: "
-        f"{topic}"
-    )
-
-    print(
-        f"Intent: "
-        f"{intent}"
-    )
-
-    print(
-        f"Target Document: "
-        f"{target_document}"
-    )
-
+    print(f"Topic: {topic}")
+    print(f"Intent: {intent}")
+    print(f"Target Document: {target_document}")
 
     # ==========================================
     # STEP 5: CHROMADB SIMILARITY SEARCH
     # ==========================================
-    print(
-        "\nStep 4: Executing mathematical "
-        "vector similarity search..."
-    )
+    print("\nStep 4: Executing mathematical vector similarity search...")
+    print(f"Search Question: {search_question}")
 
-    print(
-        f"Search Question: "
-        f"{search_question}"
-    )
-
-    # For now the router identifies the target
-    # document, but retrieval still searches
-    # across the full ChromaDB collection.
-    #
-    # Document filtering will be added
-    # in the next step.
     search_filter = {"document": target_document} if target_document else None
 
     results = vector_store.search(
@@ -266,36 +165,16 @@ def ask_question(
         filter=search_filter
     )
 
-
     # ==========================================
     # STEP 6: COMBINE RETRIEVED CHUNKS
     # ==========================================
-    print(
-        "\n--- CHROMADB RETRIEVED "
-        "CHUNKS FOUND ---"
-    )
-
+    print("\n--- CHROMADB RETRIEVED CHUNKS FOUND ---")
     combined_context = ""
 
-    for i, chunk in enumerate(
-        results,
-        1
-    ):
-
-        print(
-            f"\n--- Chunk {i} ---"
-        )
-
-        print(
-            f"Source Metadata: "
-            f"{chunk.metadata}"
-        )
-
-        print(
-            f"Content Context:\n"
-            f"{chunk.page_content}"
-        )
-
+    for i, chunk in enumerate(results, 1):
+        print(f"\n--- Chunk {i} ---")
+        print(f"Source Metadata: {chunk.metadata}")
+        print(f"Content Context:\n{chunk.page_content}")
         print("-" * 50)
 
         combined_context += (
@@ -303,15 +182,10 @@ def ask_question(
             f"{chunk.page_content}\n"
         )
 
-
     # ==========================================
     # STEP 7: CONSTRUCT FINAL RAG PROMPT
     # ==========================================
-    print(
-        "\nStep 5: Constructing final "
-        "RAG prompt..."
-    )
-
+    print("\nStep 5: Constructing final RAG prompt...")
     prompt = f"""
 You are an expert NABL assistant.
 
@@ -342,53 +216,42 @@ Current User Question:
 {user_question}
 """
 
-
     # ==========================================
-    # STEP 8: GENERATE FINAL ANSWER
+    # STEP 8: STREAM FINAL ANSWER (SSE YIELD)
     # ==========================================
-    print(
-        "\nStep 6: Generating final "
-        "AI answer..."
-    )
+    print("\nStep 6: Streaming AI answer...")
+    complete_answer = ""
 
-    final_response = llm.invoke(
-        prompt
-    )
+    for chunk in llm.stream(prompt):
+        if not chunk.content:
+            continue
 
-    answer = final_response.content
+        text = chunk.content
 
-    # Handle list response if returned
-    if isinstance(answer, list):
-        answer = answer[0]["text"]
+        # Single line check for safety
+        if isinstance(text, list) and text and isinstance(text[0], dict) and "text" in text[0]:
+            text = text[0]["text"]
 
+        text = str(text)
+
+        complete_answer += text
+        yield f"data: {text}\n\n"
 
     # ==========================================
     # STEP 9: SAVE CONVERSATION TO REDIS
     # ==========================================
-    print(
-        "\nStep 7: Saving conversation "
-        "to Redis..."
-    )
-
+    print("\nStep 7: Saving conversation to Redis...")
     add_to_history(
         session_id=session_id,
         user_message=user_question,
-        assistant_message=answer
+        assistant_message=complete_answer
     )
 
-    print(
-        "Conversation successfully saved "
-        f"for session: {session_id}"
-    )
-
-
-    # ==========================================
-    # STEP 10: RETURN FINAL ANSWER
-    # ==========================================
-    print(
-        "\nRAG request completed successfully."
-    )
-
+    print(f"Conversation successfully saved for session: {session_id}")
+    print("\nRAG request completed successfully.")
     print("=" * 60)
 
-    return answer
+    # ==========================================
+    # STEP 10: SEND DONE MARKER
+    # ==========================================
+    yield "data: [DONE]\n\n"

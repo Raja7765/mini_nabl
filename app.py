@@ -1,58 +1,34 @@
-from fastapi import UploadFile, File
+from fastapi import FastAPI, UploadFile, File
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
 import os
 import shutil
 from ingest import ingest_single_pdf
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
 from services.vector_store import VectorStore
-from fastapi import FastAPI
-from pydantic import BaseModel
-from services.rag_service import ask_question
+from services.rag_service import stream_answer
 
-
-#Create fast api application
+# Create fastapi application
 app = FastAPI()
 
-#Create a vector instance 
+# Create a vector instance 
 vector_store = VectorStore()
 
-#Request body structure 
+# Request body structure 
 class QuestionRequest(BaseModel):
     session_id: str
     question: str
 
 
-#Test endpoints
+# Test endpoints
 @app.get("/")
 def home():
     return {"message": "Mini NABL RAG API is running"}
 
-#Chat endpoint 
-@app.post("/chat")
-def chat(request: QuestionRequest):
-    
 
-    #Send user question to the RAG service 
-    answer = ask_question(request.question,request.session_id)
-
-    # Gemini response list format-la vandha text mattum extract pannum
-    if isinstance(answer, list):
-        answer = answer[0]["text"]
-
-
-    #Return the response in JSON format
-    return {
-        "question": request.question,
-        "session_id":request.session_id,
-        "answer": answer
-    }
-
-#Document upload api
+# Document upload api
 @app.post("/documents/upload")
 async def upload_document(file: UploadFile = File(...)):
-
     os.makedirs("data", exist_ok=True)
-
     file_path = os.path.join("data", file.filename)
 
     with open(file_path, "wb") as buffer:
@@ -65,3 +41,15 @@ async def upload_document(file: UploadFile = File(...)):
         "filename": file.filename,
         "chunks": chunks
     }
+
+
+# Chat Stream response endpoint
+@app.post("/chat/stream")
+def chat_stream(request: QuestionRequest):
+    return StreamingResponse(
+        stream_answer(
+            request.question,
+            request.session_id
+        ),
+        media_type="text/event-stream"
+    )
