@@ -15,8 +15,8 @@ DATA_PATH = "./data/*.pdf"
 # ==========================================
 # INGESTION & TEXT SPLITTER CONFIGURATION
 # ==========================================
-CHUNK_SIZE = 1000
-CHUNK_OVERLAP = 200
+CHUNK_SIZE = 500
+CHUNK_OVERLAP = 100
 BATCH_SIZE = 50
 MAX_RETRIES = 3
 RETRY_WAIT_SECONDS = 65

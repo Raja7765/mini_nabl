@@ -2,21 +2,20 @@ import os
 import glob
 import time
 import re
-from dotenv import load_dotenv
 
+from config import (
+    CHUNK_SIZE,
+    CHUNK_OVERLAP,
+    BATCH_SIZE,
+    MAX_RETRIES,
+    RETRY_WAIT_SECONDS,
+    DATA_PATH,
+)
 from services.vector_store import VectorStore
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-# ==========================================
-# INITIAL SETUP & ENVIRONMENT CONFIGURATION
-# ==========================================
-load_dotenv()
-
-api_key = os.getenv("GOOGLE_API_KEY")
-print("API key loaded successfully:", api_key is not None)
-
-print("Initializing Vector Store...")
+print("Initializing Vector Store for ingestion...")
 vector_store = VectorStore()
 
 
@@ -44,6 +43,17 @@ def ingest_single_pdf(pdf_file):
     else:
         document_name = cleaned_name.split("_")[0]
 
+    # --- ADDED FEEDBACK & SAFETY BLOCK ---
+    print(f"Target Document ID: {document_name}")
+    print("Attempting to delete any existing older versions in ChromaDB...")
+    
+    try:
+        vector_store.delete_by_document(document_name)
+        print(f"✅ Successfully cleared old data for {document_name}.")
+    except Exception as e:
+        print(f"⚠️ Note: Could not delete old data (it might be a new file). Details: {e}")
+    # -------------------------------------
+
     # Add metadata
     for page in pages:
         page.metadata["document"] = document_name
@@ -51,18 +61,18 @@ def ingest_single_pdf(pdf_file):
     print(f"Loaded {len(pages)} pages")
     print("Metadata:", pages[0].metadata)
 
-    # Split
+    # Split using config constants
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
-        chunk_overlap=200
+        chunk_size=CHUNK_SIZE,
+        chunk_overlap=CHUNK_OVERLAP
     )
 
     chunks = text_splitter.split_documents(pages)
 
     print(f"Created {len(chunks)} chunks")
 
-    # Store in batches
-    batch_size = 50
+    # Store in batches using config constants
+    batch_size = BATCH_SIZE
     total_chunks = len(chunks)
     total_batches = (total_chunks + batch_size - 1) // batch_size
 
@@ -75,7 +85,7 @@ def ingest_single_pdf(pdf_file):
         batch = chunks[start_idx:end_idx]
 
         attempts = 0
-        max_retries = 3
+        max_retries = MAX_RETRIES
         success = False
 
         while attempts < max_retries and not success:
@@ -96,10 +106,10 @@ def ingest_single_pdf(pdf_file):
                     if attempts < max_retries:
 
                         print(
-                            f"Rate limit hit. Retrying in 65 seconds..."
+                            f"Rate limit hit. Retrying in {RETRY_WAIT_SECONDS} seconds..."
                         )
 
-                        time.sleep(65)
+                        time.sleep(RETRY_WAIT_SECONDS)
 
                     else:
                         raise
@@ -108,7 +118,7 @@ def ingest_single_pdf(pdf_file):
                     raise
 
         if batch_num < total_batches:
-            time.sleep(65)
+            time.sleep(RETRY_WAIT_SECONDS)
 
     print(f"{os.path.basename(pdf_file)} ingestion completed.")
 
@@ -119,7 +129,7 @@ if __name__ == "__main__":
 
     print("Step 1: Loading all PDFs...")
 
-    pdf_files = glob.glob("./data/*.pdf")
+    pdf_files = glob.glob(DATA_PATH)
 
     total_chunks = 0
 

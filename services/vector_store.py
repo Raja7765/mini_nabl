@@ -1,5 +1,10 @@
 from langchain_chroma import Chroma
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from config import (
+    CHROMA_PERSIST_DIRECTORY,
+    COLLECTION_NAME,
+    EMBEDDING_MODEL_NAME,
+)
 
 
 class VectorStore:
@@ -7,13 +12,13 @@ class VectorStore:
     def __init__(self):
 
         self.embeddings = GoogleGenerativeAIEmbeddings(
-            model="gemini-embedding-001"
+            model=EMBEDDING_MODEL_NAME
         )
 
         self.chroma_db = Chroma(
-            persist_directory="./chroma_data",
+            persist_directory=CHROMA_PERSIST_DIRECTORY,
             embedding_function=self.embeddings,
-            collection_name="nabl_documents"
+            collection_name=COLLECTION_NAME
         )
 
     def search(
@@ -34,6 +39,15 @@ class VectorStore:
     def add_documents(self, documents):
 
         self.chroma_db.add_documents(documents)
+
+    def delete_by_document(self, document_name):
+        results = self.chroma_db.get(
+            where={"document": document_name}
+        )
+        ids = results.get("ids", [])
+        if ids:
+            self.chroma_db.delete(ids=ids)
+            print(f"Deleted existing document: {document_name}")
 
     def update_documents(self, ids, documents):
 

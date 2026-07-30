@@ -1,16 +1,5 @@
 import json
 from langchain_google_genai import ChatGoogleGenerativeAI
-from dotenv import load_dotenv
-import os
-# Load environment variables BEFORE creating the LLM
-load_dotenv()
-
-api_key = os.getenv("GOOGLE_API_KEY")
-
-print(
-    "Router API key loaded successfully:",
-    api_key is not None
-)
 
 
 # ==========================================

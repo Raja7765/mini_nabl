@@ -1,6 +1,3 @@
-import os
-from dotenv import load_dotenv
-
 from langchain_google_genai import ChatGoogleGenerativeAI
 from services.vector_store import VectorStore
 from services.redis_session import (
@@ -8,15 +5,6 @@ from services.redis_session import (
     add_to_history
 )
 from services.query_router import route_query
-
-
-# ==========================================
-# INITIAL SETUP & ENVIRONMENT CONFIGURATION
-# ==========================================
-load_dotenv()
-
-api_key = os.getenv("GOOGLE_API_KEY")
-print("API key loaded successfully:", api_key is not None)
 
 
 # ==========================================
