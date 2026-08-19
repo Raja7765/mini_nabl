@@ -1,5 +1,5 @@
 import os
-import glob
+from utils.document_utils import extract_document_name
 import time
 import re
 
@@ -9,7 +9,6 @@ from config import (
     BATCH_SIZE,
     MAX_RETRIES,
     RETRY_WAIT_SECONDS,
-    DATA_PATH,
 )
 from services.vector_store import VectorStore
 from langchain_community.document_loaders import PyPDFLoader
@@ -29,19 +28,7 @@ def ingest_single_pdf(pdf_file):
     loader = PyPDFLoader(pdf_file)
     pages = loader.load()
 
-    # Extract document name
-    raw_document_name = os.path.splitext(
-        os.path.basename(pdf_file)
-    )[0]
-
-    cleaned_name = raw_document_name.replace(" ", "")
-
-    match = re.match(r"^(NABL\d+[A-Z]?)", cleaned_name, re.IGNORECASE)
-
-    if match:
-        document_name = match.group(1).upper()
-    else:
-        document_name = cleaned_name.split("_")[0]
+    document_name = extract_document_name(pdf_file)
 
     # --- ADDED FEEDBACK & SAFETY BLOCK ---
     print(f"Target Document ID: {document_name}")
@@ -125,18 +112,3 @@ def ingest_single_pdf(pdf_file):
     return len(chunks)
 
 
-if __name__ == "__main__":
-
-    print("Step 1: Loading all PDFs...")
-
-    pdf_files = glob.glob(DATA_PATH)
-
-    total_chunks = 0
-
-    for pdf_file in pdf_files:
-        total_chunks += ingest_single_pdf(pdf_file)
-
-    print("\n===================================")
-    print(f"Total PDFs : {len(pdf_files)}")
-    print(f"Total Chunks : {total_chunks}")
-    print("Vector database successfully initialized!")
