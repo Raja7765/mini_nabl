@@ -2,10 +2,9 @@ from typing import List
 
 from fastapi import APIRouter, File, UploadFile
 from fastapi.concurrency import run_in_threadpool
-
-from config import DOCUMENT_FOLDER
 from ingest import ingest_single_pdf
-
+from config import DOCUMENT_FOLDER
+from ingest import ingest_multiple_pdfs
 from services.training_service import add_training_document
 from services.metadata_service import generate_metadata_for_pdf
 
