@@ -1,0 +1,64 @@
+{
+    "faqs": [
+        {
+            "intent_name": "nabl130_scope",
+            "question": "What is the scope of NABL 130?",
+            "answer": "NABL 130 describes additional accreditation requirements specifically applicable to laboratories performing tests or calibrations at customer premises (site), temporary locations set up for a defined duration away from the permanent laboratory, or in a mobile facility.",
+            "document": "NABL130"
+        },
+        {
+            "intent_name": "nabl130_permanent_lab_accreditation_claim",
+            "question": "Can a permanent laboratory claim accreditation based on its site testing accreditation?",
+            "answer": "No. If a laboratory is accredited only for site testing or site calibration, the accreditation status of the site facility cannot be used to claim accreditation for the permanent laboratory; the permanent laboratory must apply for accreditation separately.",
+            "document": "NABL130"
+        },
+        {
+            "intent_name": "nabl130_mobile_facility_definition",
+            "question": "What is defined as a Mobile Facility under NABL 130?",
+            "answer": "A mobile facility is defined as a fully equipped, self-contained, and transportable testing or calibration facility capable of performing tests or calibrations under controlled environmental conditions.",
+            "document": "NABL130"
+        },
+        {
+            "intent_name": "nabl130_personnel_testing_rule",
+            "question": "Can customer personnel perform site testing or calibration?",
+            "answer": "No. Site testing and calibration must be performed solely by authorized laboratory personnel. However, assistance or support for the operation and functioning of the device under test/calibration may be obtained from the customer.",
+            "document": "NABL130"
+        },
+        {
+            "intent_name": "nabl130_equipment_ownership_policy",
+            "question": "Can a laboratory use customer or third-party major equipment for site testing/calibration?",
+            "answer": "No. The laboratory must be furnished with all equipment needed for site testing/calibration with valid traceability and is not permitted to use any major equipment other than its own.",
+            "document": "NABL130"
+        },
+        {
+            "intent_name": "nabl130_equipment_verification_methods",
+            "question": "How must equipment be verified before and after site calibration/testing?",
+            "answer": "Equipment must be verified before taking it out of and after bringing it back to the permanent facility using: (1) verification against reference standards in the permanent lab, (2) verification using a dedicated artifact of good accuracy and stability, or (3) integrated self-check/calibration facilities.",
+            "document": "NABL130"
+        },
+        {
+            "intent_name": "nabl130_unfit_equipment_procedure",
+            "question": "What action is required if equipment is found unfit or out of calibration after site work?",
+            "answer": "The equipment must be withdrawn from service immediately, and the laboratory must examine the effects of such equipment on previous tests/calibrations and initiate procedures for the control of non-conforming work.",
+            "document": "NABL130"
+        },
+        {
+            "intent_name": "nabl130_mobile_facility_environment_precautions",
+            "question": "What special environmental precautions are required for mobile testing facilities?",
+            "answer": "The laboratory must ensure specific arrangements to minimize vibration, shock, RF interference, and noise due to vehicle operation, maintain proper environmental conditions, provide adequate space and housekeeping, and comply with all legal road regulations.",
+            "document": "NABL130"
+        },
+        {
+            "intent_name": "nabl130_report_certificate_requirements",
+            "question": "What specific details must be included on site test reports or calibration certificates?",
+            "answer": "Test reports and calibration certificates must clearly identify results obtained from site activities, specify the exact location where the test/calibration was performed, and document the environmental conditions at the site.",
+            "document": "NABL130"
+        },
+        {
+            "intent_name": "nabl130_internal_audit_requirements",
+            "question": "Does the internal audit schedule need to cover site and mobile facilities?",
+            "answer": "Yes. The internal audit plan and schedule must cover site activities, and designated internal auditors must visit site and mobile laboratories as part of the audit process to assess ongoing compliance with the quality management system.",
+            "document": "NABL130"
+        }
+    ]
+}

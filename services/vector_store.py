@@ -113,7 +113,7 @@ class VectorStore:
     def count_by_document(self, document_name):
 
         results = self.chroma_db.get(
-            where={"document": document_name}
+            where={"[VECTOR]document": document_name}
         )
 
         return len(results.get("ids", []))

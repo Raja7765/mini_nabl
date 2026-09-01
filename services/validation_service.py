@@ -5,11 +5,11 @@ from pypdf import PdfReader
 
 def validate_filename(filename: Optional[str]) -> None:
     if not filename:
-        raise ValueError("Filename is missing.")
+        raise ValueError("[VALIDATION] Filename is missing.")
 
 def validate_pdf_extension(filename: str) -> None:
     if not filename.lower().endswith(".pdf"):
-        raise ValueError("Only PDF files are allowed.")
+        raise ValueError("[VALIDATION] Only PDF files are allowed.")
 
 def validate_pdf_content(content: bytes) -> None:
     """
@@ -27,7 +27,7 @@ def validate_pdf_content(content: bytes) -> None:
         
         # 3. Check if it actually has pages
         if len(reader.pages) == 0:
-            raise ValueError("The PDF contains no pages.")
+            raise ValueError("[VALIDATION] The PDF contains no pages.")
             
         # 4. Check if the pages actually contain text
         text_found = False
@@ -37,7 +37,7 @@ def validate_pdf_content(content: bytes) -> None:
                 break
                 
         if not text_found:
-            raise ValueError("The PDF is completely blank and contains no text.")
+            raise ValueError("[VALIDATION] The PDF is completely blank and contains no text.")
             
     except ValueError:
         # Re-raise the ValueErrors we explicitly threw above

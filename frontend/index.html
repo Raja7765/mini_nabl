@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>NABL AI Assistant</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="chat-container">
+
+        <!-- Header -->
+        <header class="chat-header">
+            <div>
+                <h1>NABL AI Assistant</h1>
+                <p>Ask questions from NABL documents</p>
+            </div>
+
+            <button id="clearBtn">Clear</button>
+        </header>
+
+
+        <!-- Chat Messages -->
+        <main id="chatMessages" class="chat-messages">
+
+            <div class="message assistant">
+                <div class="message-label">
+                    Assistant
+                </div>
+
+                <div class="message-content">
+                    Hello! Ask me anything about NABL documents.
+                </div>
+            </div>
+
+        </main>
+
+
+        <!-- Input Area -->
+        <footer class="chat-input-area">
+
+            <input type="text" id="questionInput" placeholder="Ask a question..." autocomplete="off">
+
+            <button id="sendBtn">
+                Send
+            </button>
+
+        </footer>
+
+    </div>
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>

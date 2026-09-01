@@ -37,23 +37,23 @@ def ingest_single_pdf(pdf_file):
     raw_document_name = extract_document_name(pdf_file)
     normalized_doc_id = str(raw_document_name).strip().upper().replace(" ", "")
 
-    print(f"[DEBUG] Document ID: {normalized_doc_id}")
-    print(f"[DEBUG] Number of pages: {num_pages}")
+    print(f"[INGEST] Document ID: {normalized_doc_id}")
+    print(f"[INGEST] Number of pages: {num_pages}")
 
     # 1. Delete existing records before re-ingestion
     deleted_count = 0
     try:
         deleted_count = vector_store.delete_by_document(normalized_doc_id)
-        print(f"[DEBUG] Number of records deleted before re-ingestion: {deleted_count}")
+        print(f"[INGEST] Number of records deleted before re-ingestion: {deleted_count}")
     except Exception as e:
-        print(f"[DEBUG] Could not delete old data: {e}")
+        print(f"[INGEST] Could not delete old data: {e}")
 
     # 2. Add document metadata to pages
     for page in pages:
         page.metadata["document"] = normalized_doc_id
 
     if pages:
-        print(f"[DEBUG] Sample Page 0 Metadata: {pages[0].metadata}")
+        print(f"[INGEST] Sample Page 0 Metadata: {pages[0].metadata}")
 
     # 3. Split into chunks
     text_splitter = RecursiveCharacterTextSplitter(
@@ -82,13 +82,13 @@ def ingest_single_pdf(pdf_file):
 
     unique_chunk_count = len(seen_contents)
 
-    print(f"[DEBUG] Number of chunks before insertion: {num_chunks}")
-    print(f"[DEBUG] Unique chunk count: {unique_chunk_count}")
-    print(f"[DEBUG] Duplicate chunk count: {duplicate_chunk_count}")
+    print(f"[INGEST] Number of chunks before insertion: {num_chunks}")
+    print(f"[INGEST] Unique chunk count: {unique_chunk_count}")
+    print(f"[INGEST] Duplicate chunk count: {duplicate_chunk_count}")
 
     if num_chunks > 0:
         sample_page = chunks[0].metadata.get("page", 0)
-        print(f"[DEBUG] Sample Chunk 0 -> Document ID: {normalized_doc_id}, Page: {sample_page}, Chunk ID: {chunk_ids[0]}")
+        print(f"[INGEST] Sample Chunk 0 -> Document ID: {normalized_doc_id}, Page: {sample_page}, Chunk ID: {chunk_ids[0]}")
 
     # 5. Store chunks in batches
     total_chunks = len(chunks)
@@ -127,7 +127,7 @@ def ingest_single_pdf(pdf_file):
         if batch_num < total_batches:
             time.sleep(RETRY_WAIT_SECONDS)
 
-    print(f"[DEBUG] Number of records inserted: {records_inserted}")
+    print(f"[INGEST] Number of records inserted: {records_inserted}")
     print(f"Ingestion completed for {os.path.basename(pdf_file)}.")
     print("=" * 60 + "\n")
     return records_inserted
@@ -158,7 +158,7 @@ def ingest_multiple_pdfs(pdf_files):
         filename = os.path.basename(pdf_file)
         
         print("\n" + "-" * 70)
-        print(f"Processing PDF {index}/{total_files}: {filename}")
+        print(f"[INGEST] Processing PDF {index}/{total_files}: {filename}")
         print("-" * 70)
 
         try:
@@ -181,11 +181,11 @@ def ingest_multiple_pdfs(pdf_files):
     # Final summary
     # --------------------------------------------------------
     print("\n" + "=" * 70)
-    print("BULK INGESTION COMPLETED")
+    print("[INGEST] BULK INGESTION COMPLETED")
     print("=" * 70)
-    print(f"Total files : {total_files}")
-    print(f"Successful  : {len(successful_files)}")
-    print(f"Failed      : {len(failed_files)}")
+    print(f"[INGEST] Total files : {total_files}")
+    print(f"[INGEST] Successful  : {len(successful_files)}")
+    print(f"[INGEST] Failed      : {len(failed_files)}")
     print("=" * 70)
 
     return {

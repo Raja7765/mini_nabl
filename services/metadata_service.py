@@ -71,7 +71,7 @@ def create_metadata_file():
         )
 
     print(
-        f"[METADATA] Created: {METADATA_FILE}"
+        f"Created: {METADATA_FILE}"
     )
 
 
@@ -104,7 +104,7 @@ def save_metadata(data):
     """
 
     print(
-        f"[METADATA] Writing to: {METADATA_FILE}"
+        f"Writing to: {METADATA_FILE}"
     )
 
     with open(
@@ -121,7 +121,7 @@ def save_metadata(data):
         )
 
     print(
-        f"[METADATA] metadata.json saved successfully"
+        f"metadata.json saved successfully"
     )
 
 
@@ -135,7 +135,7 @@ def extract_first_page_text(pdf_path: str) -> str:
     """
 
     print(
-        f"[METADATA] Reading first page: {pdf_path}"
+        f"Reading first page: {pdf_path}"
     )
 
     reader = PdfReader(pdf_path)
@@ -146,7 +146,7 @@ def extract_first_page_text(pdf_path: str) -> str:
     text = reader.pages[0].extract_text() or ""
 
     print(
-        f"[METADATA] First page extracted "
+        f"First page extracted "
         f"({len(text)} characters)"
     )
 
@@ -202,7 +202,7 @@ def extract_document_id(text: str):
     """
 
     match = re.search(
-        r"\bNABL\s*[-.]?\s*(\d+[A-Z]?)\b",
+        r"\bNABL\s*[-.]?\s*(\d+)\b",
         text,
         re.IGNORECASE
     )
@@ -375,7 +375,7 @@ def generate_metadata_for_pdf(pdf_path: str):
     """
 
     print(
-        f"[METADATA] Processing: {pdf_path}"
+        f"Processing: {pdf_path}"
     )
 
     # --------------------------------------
@@ -387,7 +387,7 @@ def generate_metadata_for_pdf(pdf_path: str):
     )
 
     print(
-        f"[METADATA] Extracted data: {metadata}"
+        f"Extracted data: {metadata}"
     )
 
     document_id = metadata.get(
@@ -440,7 +440,7 @@ def generate_metadata_for_pdf(pdf_path: str):
     )
 
     print(
-        f"[METADATA] Successfully updated: "
+        f"Successfully updated: "
         f"{document_id}"
     )
 
@@ -510,14 +510,14 @@ def remove_document_metadata(document_id: str):
     if removed:
 
         print(
-            f"[METADATA] Removed: "
+            f"Removed: "
             f"{document_id}"
         )
 
     else:
 
         print(
-            f"[METADATA] Document not found: "
+            f"Document not found: "
             f"{document_id}"
         )
 

@@ -15,6 +15,7 @@ DOCUMENT_FOLDER = Path(r"C:\Users\rajas\OneDrive\ドキュメント\NABL_Documen
 BASE_DIR = Path(__file__).resolve().parent
 TRAINING_FILE = BASE_DIR / "training.json"
 METADATA_FILE = BASE_DIR / "metadata.json"
+FAQ_FILE = BASE_DIR / "data" / "faqs.json"
 # ==========================================
 # INGESTION & TEXT SPLITTER CONFIGURATION
 # ==========================================

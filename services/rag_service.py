@@ -1,13 +1,16 @@
 import json
 from langchain_google_genai import ChatGoogleGenerativeAI
-
+from services.faq_services import find_faq
 from services.vector_store import VectorStore
 from services.redis_session import (
     get_session_history,
     add_to_history
 )
 from services.query_router import route_query
-
+from services.chat_intent import(
+    detect_chat_intent,
+    get_chat_response
+)
 
 # ==========================================
 # LOAD EXISTING CHROMADB
@@ -37,10 +40,10 @@ def rewrite_question(
     conversation_history: str
 ) -> str:
     if not conversation_history.strip():
-        print("No previous conversation. Using original question for retrieval.")
+        print("[RAG] No previous conversation. Using original question for retrieval.")
         return user_question
 
-    print("\nRewriting follow-up question using conversation history...")
+    print("\n[RAG] Rewriting follow-up question using conversation history...")
 
     rewrite_prompt = f"""
 You are a query rewriting assistant for an NABL document chatbot.
@@ -79,12 +82,12 @@ Current Question:
                 rewritten_question = str(rewritten_question[0])
 
         rewritten_question = str(rewritten_question).strip()
-        print(f"Original Question: {user_question}")
-        print(f"Rewritten Question: {rewritten_question}")
+        print(f"[RAG] Original Question: {user_question}")
+        print(f"[RAG] Rewritten Question: {rewritten_question}")
         return rewritten_question or user_question
 
     except Exception as e:
-        print(f"[REWRITE_ERROR] Failed to rewrite question: {e}")
+        print(f"[RAG] Failed to rewrite question: {e}")
         return user_question
 
 
@@ -97,17 +100,61 @@ def stream_answer(
     session_id: str
 ):
     print("\n" + "=" * 60)
-    print("NEW STREAM CHAT REQUEST")
+    print("[RAG] NEW STREAM CHAT REQUEST")
     print("=" * 60)
     print(f"Session ID -> '{session_id}'")
     print(f"User Query Captured -> '{user_question}'")
 
     # ==========================================
+    # STEP 0: FAQ CHECK
+    # ==========================================
+
+    faq = find_faq(user_question)
+
+    if faq:
+
+        print(
+            f"[FAQ] Match found: "
+            f"{faq.get('intent_name')}"
+        )
+
+        response = faq.get("answer", "")
+
+        yield f"data: {response}\n\n"
+        yield "data: [DONE]\n\n"
+
+        return
+
+    print("[FAQ] No FAQ match. Continuing with RAG...")
+
+    # ==========================================
+    # STEP 0: GREETING / SMALL TALK CHECK
+    # ==========================================
+    chat_intent = detect_chat_intent(user_question)
+    if chat_intent:
+        response = get_chat_response(chat_intent)
+        print(
+            f"[CHAT INTENT] Detected: {chat_intent}"
+        )
+        print(
+            "[CHAT INTENT] Returning predefined response."
+        )
+        add_to_history(
+            session_id=session_id,
+            user_message=user_question,
+            assistant_message=response
+        )
+
+        yield f"data: {response}\n\n"
+        yield "data: [DONE]\n\n"
+
+        return
+    # ==========================================
     # STEP 1: GET PREVIOUS HISTORY FROM REDIS
     # ==========================================
-    print("\nStep 1: Loading previous conversation from Redis...")
+    print("\n[RAG]Step 1: Loading previous conversation from Redis...")
     history = get_session_history(session_id) or []
-    print(f"Previous conversation turns found: {len(history)}")
+    print(f"[RAG] Previous conversation turns found: {len(history)}")
 
     # ==========================================
     # STEP 2: FORMAT CONVERSATION HISTORY
@@ -142,8 +189,8 @@ def stream_answer(
     # ==========================================
     # STEP 5: CHROMADB SIMILARITY SEARCH
     # ==========================================
-    print("\nStep 4: Executing mathematical vector similarity search...")
-    print(f"Search Question: {search_question}")
+    print("\n[RAG]Step 4: Executing mathematical vector similarity search...")
+    print(f"[RAG]Search Question: {search_question}")
 
     # Maintain document isolation: filter by target_document if specified
     search_filter = {"document": target_document} if target_document else None
@@ -230,7 +277,7 @@ Current User Question:
     # ==========================================
     # STEP 8: STREAM FINAL ANSWER
     # ==========================================
-    print("\nStep 6: Streaming AI answer...")
+    print("\n[RAG]Step 6: Streaming AI answer...")
     complete_answer = ""
 
     try:
@@ -269,7 +316,7 @@ Current User Question:
             user_message=user_question,
             assistant_message=complete_answer
         )
-        print(f"Conversation successfully saved for session: {session_id}")
+        print(f"[RAG]Conversation successfully saved for session: {session_id}")
     except Exception as e:
         print(f"[REDIS_ERROR] Failed to save conversation history: {e}")
 

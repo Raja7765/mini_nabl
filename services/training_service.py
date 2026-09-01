@@ -108,7 +108,7 @@ def add_training_document(
     save_training_data(data)
 
     print(
-        f"[TRAINING] Added/updated: {sanitized_filename}"
+        f"Added/updated: {sanitized_filename}"
     )
 
 
@@ -172,11 +172,11 @@ def remove_training_document(sanitized_filename):
 
     if removed:
         print(
-            f"[TRAINING] Removed: {sanitized_filename}"
+            f"Removed: {sanitized_filename}"
         )
     else:
         print(
-            f"[TRAINING] Document not found: {sanitized_filename}"
+            f"Document not found: {sanitized_filename}"
         )
 
     return removed

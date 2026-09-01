@@ -1,0 +1,146 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f6f8;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.chat-container {
+    width: 90%;
+    max-width: 900px;
+    height: 90vh;
+    background: white;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* Header */
+
+.chat-header {
+    padding: 20px;
+    background: #1f2937;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chat-header h1 {
+    font-size: 22px;
+}
+
+.chat-header p {
+    margin-top: 5px;
+    font-size: 13px;
+    color: #d1d5db;
+}
+
+#clearBtn {
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    background: white;
+    color: #1f2937;
+}
+
+/* Chat area */
+
+.chat-messages {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+/* Messages */
+
+.message {
+    margin-bottom: 18px;
+    max-width: 75%;
+}
+
+.message-label {
+    font-size: 12px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.message-content {
+    padding: 12px 15px;
+    border-radius: 10px;
+    line-height: 1.5;
+    font-size: 14px;
+}
+
+/* Assistant */
+
+.message.assistant {
+    align-self: flex-start;
+}
+
+.message.assistant .message-content {
+    background: #f1f3f5;
+    color: #222;
+}
+
+/* User */
+
+.message.user {
+    margin-left: auto;
+}
+
+.message.user .message-label {
+    text-align: right;
+}
+
+.message.user .message-content {
+    background: #2563eb;
+    color: white;
+}
+
+/* Input */
+
+.chat-input-area {
+    display: flex;
+    padding: 15px;
+    border-top: 1px solid #ddd;
+    gap: 10px;
+}
+
+#questionInput {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    outline: none;
+    font-size: 14px;
+}
+
+#questionInput:focus {
+    border-color: #2563eb;
+}
+
+#sendBtn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    background: #2563eb;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+#sendBtn:hover {
+    background: #1d4ed8;
+}

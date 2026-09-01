@@ -7,7 +7,7 @@ from config import DOCUMENT_FOLDER
 from ingest import ingest_single_pdf
 from services.training_service import add_training_document
 from utils.document_utils import extract_document_name
-
+from services.metadata_service import generate_metadata_for_pdf
 from services.validation_service import (
     validate_filename,
     validate_pdf_extension,
@@ -44,6 +44,9 @@ async def update_document(file: UploadFile = File(...)):
 
         with open(file_path, "wb") as buffer:
             buffer.write(content)
+        
+        # Update metadata
+        metadata = await run_in_threadpool(generate_metadata_for_pdf, str(file_path))
 
         # 6. Extract document name
         sanitized_filename = extract_document_name(filename)
